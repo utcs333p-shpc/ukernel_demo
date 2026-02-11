@@ -31,18 +31,18 @@ int test_gemm( int nrepeats, int first, int last, int inc)
 	for ( size=last; size>= first; size-=inc )
 	{
     	/* we will only time cases where all three matrices are square */
-    	m = 4;
-        n = 4;
+    	m = size; //4;
+        n = size; //4;
         k = size;
 		csA = m; csB = k; csC = m;
 
 		rsA = rsB = rsC = 1;
 
-    	A = ( double * ) _mm_malloc( csA * k * sizeof( double ), 64 );
-    	B = ( double * ) _mm_malloc( rsB * k * sizeof( double ), 64 );
-    	C = ( double * ) _mm_malloc( csC * n * sizeof( double ), 64 );
-    	Cold = ( double * ) _mm_malloc( csC * n * sizeof( double ), 64 );
-    	Cref = ( double * ) _mm_malloc( csC * n * sizeof( double ), 64 );
+    	A = ( double * ) malloc( csA * k * sizeof( double ) );
+    	B = ( double * ) malloc( csB * n * sizeof( double ) );
+    	C = ( double * ) malloc( csC * n * sizeof( double ) );
+    	Cold = ( double * ) malloc( csC * n * sizeof( double ) );
+    	Cref = ( double * ) malloc( csC * n * sizeof( double ) );
 
 
 		bli_drandm( 0, BLIS_DENSE, m, k, A, rsA, csA);
@@ -55,19 +55,20 @@ int test_gemm( int nrepeats, int first, int last, int inc)
 			memcpy( Cref, Cold, csC * n * sizeof( double ) );
 
 			t_start = bli_clock();
-		
+	
+              	
 			bli_dgemm( BLIS_NO_TRANSPOSE, BLIS_NO_TRANSPOSE,  
 						m, n, k, &done, 
 						A, rsA, csA, 
 						B, rsB, csB, 
 						&done, Cref, rsC, csC );	
-			t_ref = bli_clock_min_diff( t_ref, t_start );
+			
+            t_ref = bli_clock_min_diff( t_ref, t_start );
 			
 		}
 
-		gflops_ref = 2 * m * n * k / ( t_ref * 1.0e9 );
+		gflops_ref = 2.0 * m * n * k / ( t_ref * 1.0e9 );
 
-		 
 		for ( irep=0; irep<nrepeats; irep++ )
 		{
 			memcpy( C, Cold, csC * n * sizeof( double ) );
@@ -83,12 +84,12 @@ int test_gemm( int nrepeats, int first, int last, int inc)
 			
 		}
 
-		gflops = 2 * 10 * m * n * k / ( t * 1.0e9 );
+		gflops = 2.0 * m * n * k / ( t * 1.0e9 );
 		
 		diff    = shpc_maxabsdiff( m, n, C, rsC, csC, Cref, rsC, csC );
         maxdiff = max ( diff, maxdiff );
-
-		printf( "data_dgemm");
+		
+        printf( "data_dgemm");
 		printf( "( %4lu, 1:6 ) = [ %5lu %5lu %5lu %8.2f %8.2f %15.4e ];\n",
 		        ( unsigned long )(size - first)/inc + 1,
 		        ( unsigned long )m,
